@@ -52,14 +52,44 @@ def get_all_filings(id,q1):
     return df
 
 if __name__ == '__main__':
-    # pd.DataFrame(get_filers('tourbillon')).set_index('id').to_csv('../data/WhaleWisdom/secmaster.csv')
-    id = 256304
-    for qt in quarter_mapping.keys():
-        df = get_all_filings(id, qt)
-        month,day,year = quarter_mapping[qt].split('/')
-        date = year + month + day
-        output_filename = '../data/WhaleWisdom/%s/%s.csv'%(id,date)
-        print 'Writing %s rows to %s'%(df.shape[0], output_filename)
-        df.to_csv(output_filename)
+    import os
+    from optparse import OptionParser
+
+    parser = OptionParser()
+    parser.add_option("-s", "--search", dest="searchterm", default=None,
+                      help="search all filers")
+    parser.add_option("-i", "--identifier", dest="identifier", default=None,
+                      help="fund identifier")
+    parser.add_option("-o", "--output", dest="data_dir", default="/home/ubuntu/arithmetic/data/13F",
+                      help="output data directory (default = /home/ubuntu/arithmetic/data/13F)")
+    (opts, args) = parser.parse_args()
+
+    if opts.searchterm is not None:
+        if opts.identifier is not None:
+            print '--search and --identifier are mutually exclusive'
+            print parser.print_help()
+            exit(-1)
+        else:
+            print pd.DataFrame(search_filers(opts.searchterm)).set_index('id')
+            exit(1)
+    elif opts.identifier is not None:
+        try:
+            os.makedirs('%s/%s'%(opt.data_dir, opt.identifier))
+        except Exception as e:
+            print e
+
+        for qt in quarter_mapping.keys():
+            df = get_all_filings(opts.identifier, qt)
+            month,day,year = quarter_mapping[qt].split('/')
+            date = year + month + day
+            output_filename = '%s/%s/%s.csv'%(opts.data_dir,opts.identifier,date)
+            print 'Writing %s rows to %s'%(df.shape[0], output_filename)
+            df.to_csv(output_filename)        
+    else:
+        print 'Must pass either --search or --identifier'
+        print parser.print_help()
+        exit(-1)
+        
+
 
 
